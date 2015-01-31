@@ -1,0 +1,15 @@
+shift(ref array){
+    for i := 6, i -= 1 {
+        array[i] <=> array[(i+1) % 7]
+    } until i == 0
+}
+
+cycle(const n, ref array){
+    for i := n, i -= 1 {
+        shift(&array)
+    } until i == 0
+}
+
+main(array := [1, 2, 3, 4, 5, 6, 7]){
+    cycle(4, &array)
+}

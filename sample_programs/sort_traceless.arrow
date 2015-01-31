@@ -1,0 +1,60 @@
+pass(ref array, ref trace, ref s){
+    for i := 0 {
+        if (array[i] > array[i+1]){
+            array[i] <=> array[i+1]
+
+            s += 1
+            trace[s] += 1 + i
+            s += 1
+            trace[s] += 1 + (i+1)
+
+        } => trace[s] == i+1
+    } i += 1, until i == 3
+}
+
+copy(ref array, ref result){
+    for i := 0 {
+        result[i] += array[i]
+    } i += 1, until i == 4
+}
+
+check(const array, ref counter){
+    for i := 0 {
+        if (array[i] < array[i+1]){
+            counter += 1
+        } <=>
+    } i += 1, until i == 3
+}
+
+sort(ref array, ref trace, ref s){
+    done := 0
+    from s == 0 {
+        pass(&array, &trace, &s)
+        
+        do/undo {
+            counter := 0
+            check(array, &counter)
+        }
+        yielding {
+            if counter == 3 {
+                done += 3
+            } <=>
+        }
+
+    } until done == 3
+    done == 3
+}
+
+main(
+A := [3, 7, 3, 2],
+result := [0, 0, 0, 0],
+){
+    do/undo {
+        trace := [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+        s := 0
+        sort(&A, &trace, &s)
+
+    } yielding {
+        copy(&A, &result)
+    }
+}

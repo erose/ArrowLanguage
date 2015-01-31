@@ -1,0 +1,23 @@
+prime_factors(const n, ref results, ref s){
+    i := 2
+    x := n
+    from (i == 2){
+        if (n % i == 0){
+            results[s] += i
+            x /= i
+            s += 1
+        } => results[s] == 0
+
+        i += 1
+    } until i == n-1
+    x == 2
+    i == n-1
+}
+
+main(
+n := 28,
+results := [0, 0, 0, 0, 0, 0, 0, 0, 0],
+s := 0
+){
+    #prime_factors(n, &results, &s)
+}

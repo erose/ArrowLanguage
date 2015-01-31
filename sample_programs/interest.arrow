@@ -1,0 +1,11 @@
+main(
+savings := 100,
+monthly_interest_rate := 1/100,
+monthly_contribution := 20,
+n := 3
+){
+    for i := 0, i += 1 {
+        savings *= (1 + monthly_interest_rate)
+        savings += monthly_contribution
+    } until i == n
+}
