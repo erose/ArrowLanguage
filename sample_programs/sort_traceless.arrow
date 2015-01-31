@@ -12,9 +12,9 @@ pass(ref array, ref trace, ref s){
     } i += 1, until i == 3
 }
 
-copy(ref array, ref result){
+copy(ref array, ref target){
     for i := 0 {
-        result[i] += array[i]
+        target[i] += array[i]
     } i += 1, until i == 4
 }
 
@@ -47,7 +47,7 @@ sort(ref array, ref trace, ref s){
 
 main(
 A := [3, 7, 3, 2],
-result := [0, 0, 0, 0],
+sorted := [0, 0, 0, 0],
 ){
     do/undo {
         trace := [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
@@ -55,6 +55,6 @@ result := [0, 0, 0, 0],
         sort(&A, &trace, &s)
 
     } yielding {
-        copy(&A, &result)
+        copy(&A, &sorted)
     }
 }

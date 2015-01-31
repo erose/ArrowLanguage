@@ -33,7 +33,7 @@ def unexpression(node):
 
     elif node.kind == "ARRAY_REF":
         return parser.ParseNode("ARRAY_REF",
-            name=node.string, expr=unexpression(node.expr))
+            name=node.name, expr=unexpression(node.expr))
 
     elif node.kind == "ARRAY_EXPR":
         return parser.ParseNode("ARRAY_EXPR",

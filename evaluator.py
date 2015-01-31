@@ -226,6 +226,7 @@ def statement_eval(node, table):
 
         # TODO: check start condition
 
+        new = block_eval(block_node, new)
         while not expr_eval(until_node, new):
             new = block_eval(block_node, new)
 

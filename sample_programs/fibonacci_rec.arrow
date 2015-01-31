@@ -1,15 +1,15 @@
-fib(const n, ref result){
+fib(const n, ref output){
     if (n <= 2){
-        result += 1
+        output += 1
     } => (n <= 2)
     else {
-        fib(n - 2, &result)
-        fib(n - 1, &result)
+        fib(n - 2, &output)
+        fib(n - 1, &output)
     }
 }
 
 main(
-result := 0
+output := 0
 ){
-    fib(10, &result)
+    fib(10, &output)
 }
