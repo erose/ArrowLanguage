@@ -7,20 +7,26 @@ class Num:
             bottom = 1
 
         if sign is None:
-            if (bottom > 0) != (top > 0):
-                self.sign = -1
+            # If top and bottom's signs match, self.sign is positive.
             if (bottom > 0) == (top > 0):
                 self.sign = 1
+            # Otherwise it's negative.
+            else:
+                self.sign = -1
         else:
             self.sign = sign
 
+        # Top and bottom are positive only, since +/- is stored in self.sign.
         self.top = abs(top)
         self.bottom = abs(bottom)
 
+        # Because Nums are immutable, a reduction to lowest terms
+        # in the constructor ensures they are always in lowest form.
         self.reduce()
 
     @staticmethod
     def gcd(a, b):
+        # Euclid's algorithm.
         while True:
             a, b = b, a % b
             if b == 0:
@@ -33,19 +39,19 @@ class Num:
 
             self.top, self.bottom = self.top // d, self.bottom // d
 
+    def reciprocal(self):
+        return Num(self.bottom, self.top, sign=self.sign)
+
     def __add__(self, other):
-        # (a/b) + (c/d)
+        # a/b + c/d = (ad)/(bd) + (bc)/(bd) = (ad + bc)/(bd)
         a, b, c, d = self.top, self.bottom, other.top, other.bottom
         return Num(a*self.sign*d + b*c*other.sign, b*d)
 
     def __sub__(self, other):
-        return self + -other
+        return self + (-other)
 
     def __neg__(self):
         return Num(self.top, self.bottom, sign=-self.sign)
-
-    def reciprocal(self):
-        return Num(self.bottom, self.top, sign=self.sign)
 
     def __mul__(self, other):
         return Num(self.top*other.top, self.bottom*other.bottom,

@@ -10,7 +10,7 @@ def tokenizer(kind):
 
 def raise_error(token):
     raise shared.ArrowException(
-        "scanning",
+        shared.Stages.scanning,
         "Unrecognized symbol '{}'.".format(token.string),
         token)
 

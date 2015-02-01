@@ -47,7 +47,7 @@ def handle_errors(e):
         max(len(prev_line), len(line), len(next_line)) + len(tab) + 4)
 
     print("Error occurred in file '{}' on line {} during {}.".format(
-        filename, line_num, e.stage))
+        filename, line_num, e.stage.name))
 
     # Line number and line are separated by a tab.
     print()
@@ -55,7 +55,7 @@ def handle_errors(e):
     print(prev_line_num, tab, prev_line, sep="")
     print(line_num, tab, line, sep="")
 
-    # Pointer's position = how far along the line the target is + preamble.
+    # Pointer's position = (how far along the line the target is) + preamble.
     offset = len(str(line_num)) + len(tab)
     print(" " * (char_num + offset) + colorize("^", "RED"))
 

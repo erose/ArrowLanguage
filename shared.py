@@ -1,8 +1,16 @@
+from enum import Enum
+
 # The program node.
 program = None
 
 # A list of lines of the Arrow code currently being processed.
 code = None
+
+# The possible states the interpreter can be in.
+class Stages(Enum):
+  scanning = 1
+  parsing = 2
+  evaluation = 3
 
 class ArrowException(Exception):
     """

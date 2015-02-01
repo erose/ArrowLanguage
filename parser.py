@@ -1,29 +1,44 @@
 import shared, datatypes, inverter, evaluator
 
 class ParseNode:
+    """
+    A node in the abstract syntax tree.
+    """
+
     def __init__(self, kind, **kwargs):
         self.kind = kind
-        self.data = {}
-
-        for key, value in kwargs.items():
-            self.data[key] = value
+        self.data = dict(**kwargs)
 
     def __getattr__(self, attr):
         if attr in self.data:
             return self.data[attr]
+        
         raise KeyError(attr)
 
     def __repr__(self):
         return "{}, {}".format(str(self.kind), str(self.data))
 
 class Parser:
+    """
+    The base class for the ArrowParser object, providing utility and
+    processing methods.
+    """
+
     def __init__(self, tokens):
         self.token_iter = iter(tokens)
         self.current = next(self.token_iter)
         self.lookahead = next(self.token_iter)
 
     def raise_error(self, message):
-        raise shared.ArrowException("parsing", message, self.current)
+        raise shared.ArrowException(
+            shared.Stages.parsing,
+            message,
+            self.current)
+
+    # 
+    # These 8 methods are aliases for process() with various switches
+    # on or off.
+    # 
 
     def accept_kinds(self, *kinds):
         return self.process(kinds=kinds, boolean=False, necessary=False)
@@ -49,7 +64,7 @@ class Parser:
     def expect_strings(self, *strings):
         return self.process(strings=strings, boolean=False, necessary=True)
 
-    def processing_error_message(self, kinds, strings):
+    def error_message(self, kinds, strings):
         message = "Expected {}, but found {}.".format(
             " or ".join(["'" + s + "'" for s in strings]) if strings
             else "something of kind {}".format(" or ".join(kinds)),
@@ -57,23 +72,26 @@ class Parser:
             )
         return message
 
-    def process(self, kinds=[], strings=[], boolean=None, necessary=None, consume=True):
+    def process(self, kinds=[], strings=[],boolean=None, necessary=None):
+        """
+
+        """
+
         kind, string = self.current.kind, self.current.string
 
         if kind in kinds or string in strings:
-            if consume:
-                try:
-                    self.current = self.lookahead
-                    self.lookahead = next(self.token_iter)
-                except StopIteration:
-                    pass
+            try:
+                self.current = self.lookahead
+                self.lookahead = next(self.token_iter)
+            except StopIteration:
+                pass
 
             if boolean:     return True
             if necessary:   return string
             else:           return True, string
         else:
             if necessary:
-                self.raise_error(self.processing_error_message(kinds, strings))
+                self.raise_error(self.error_message(kinds, strings))
             if boolean:     return False
             else:           return False, None
             

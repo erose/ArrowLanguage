@@ -1,5 +1,5 @@
 prime_factors(const n, ref results, const s){
-    if n >= 2 {
+    if n > 1 {
         do/undo {
             i := 1
             from (i == 1){
@@ -14,7 +14,7 @@ prime_factors(const n, ref results, const s){
 }
 
 main(
-n := 28,
+n := 2990,
 results := [0, 0, 0, 0, 0, 0, 0, 0, 0]
 ){
     prime_factors(n, &results, 0)
