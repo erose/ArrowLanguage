@@ -3,8 +3,8 @@ add(ref x, const c){
 }
 
 f(const c, ref x){
-    x -= 1
     result 1
+    exit if x == 1
 }
 
 main(n := 0){

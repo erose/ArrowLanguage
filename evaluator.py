@@ -323,6 +323,9 @@ def statement_eval(node, table):
         inverted_node = inverter.unstatement(node.statement)
         table = statement_eval(inverted_node, table)
 
+    elif node.kind in ("ENTER", "EXIT"):
+        print(node.kind, node.condition)
+
     return table
 
 def block_eval(node, table=Memory()):

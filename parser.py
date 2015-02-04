@@ -72,9 +72,9 @@ class Parser:
             )
         return message
 
-    def process(self, kinds=[], strings=[],boolean=None, necessary=None):
+    def process(self, kinds=[], strings=[], boolean=None, necessary=None):
         """
-
+        Checks input against the current token and consumes it.
         """
 
         kind, string = self.current.kind, self.current.string
@@ -154,7 +154,8 @@ class ArrowParser(Parser):
             elif self.check_strings("const"):
                 var = self.V()
                 const_parameters.append(var)
-            if self.current.string == ")": break
+            if self.current.string == ")":
+                break
             self.confirm_strings(",")
 
         self.confirm_strings(")")
@@ -201,12 +202,23 @@ class ArrowParser(Parser):
                 return self.do_undo_statement()
             if self.current.string == "result":
                 return self.result_statement()
+            if self.current.string in ("enter", "exit"):
+                return self.enter_or_exit_statement()
 
         if self.current.string == "{":
             return self.block()
 
         self.raise_error(
             "Expected a statement, but found '{}'.".format(self.current.string))
+
+    def enter_or_exit_statement(self):
+        if self.check_strings("enter"):
+            self.confirm_strings("if")
+            return ParseNode("ENTER", condition=self.expression())
+
+        elif self.check_strings("exit"):
+            self.confirm_strings("if")
+            return ParseNode("EXIT", condition=self.expression())
 
     def un(self):
         self.confirm_strings("un")

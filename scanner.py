@@ -23,7 +23,7 @@ class Scanner:
             # Skip comments, which are either hashtags or C-style /* ... */.
             (r"#.*|\/\*.*\*\/", tokenizer("SKIPPABLE")),
             # Keywords.
-            (r"\bdo/undo\b|\byielding\b|\bresult\b|\buntil\b|\bconst\b|\bfrom\b|\bfor\b|\bref\b|\bif\b", tokenizer("KEYWORD")),
+            (r"\bexit\b|\benter\b|\bdo/undo\b|\byielding\b|\bresult\b|\buntil\b|\bconst\b|\bfrom\b|\bfor\b|\bref\b|\bif\b", tokenizer("KEYWORD")),
             # Identifiers.
             (r"[a-zA-Z_]+\d*[a-zA-Z_]*", tokenizer("ID")),
             # Number literals.
