@@ -8,7 +8,5 @@ f(const c, ref x){
 }
 
 main(n := 0){
-    for i := 0 {
-        n += f(1, &n)
-    } i += 1, until i == 5
+    f(1, &n)
 }
