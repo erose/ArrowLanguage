@@ -1,20 +1,20 @@
 prime_factors(const n, ref results, const s){
-    if n > 1 {
-        do/undo {
-            i := 1
-            from (i == 1){
-                i += 1
-            } until n % i == 0
-        }
-        yielding {
-            results[s] += i
-            prime_factors(n/i, &results, s + 1)
-        }
-    } <=>
+    exit 0 if n == 1
+
+    do/undo {
+        i := 1
+        from (i == 1){
+            i += 1
+        } until n % i == 0
+    }
+    yielding {
+        results[s] += i
+        prime_factors(n/i, &results, s + 1)
+    }
 }
 
 main(
-n := 2990,
+n := 1893,
 results := [0, 0, 0, 0, 0, 0, 0, 0, 0]
 ){
     prime_factors(n, &results, 0)

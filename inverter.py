@@ -1,4 +1,4 @@
-import shared, parser
+import shared, parser, datatypes
 
 op_inverses = {
     "+": "-",
@@ -9,21 +9,16 @@ op_inverses = {
 
 def unexpression(node):
     if node.kind == "FUNCTION_CALL":
-        return parser.ParseNode("FUNCTION_CALL",
-            name=node.name,
-            backwards= not (node.backwards),
-            ref_args=node.ref_args,
-            const_args=node.const_args
-            )
+        return node.replace(backwards= not (node.backwards))
 
     if node.kind == "BIN_OP":
-        return parser.ParseNode("BIN_OP",
-            op=node.op,
+        return node.replace(
             left=unexpression(node.left),
-            right=unexpression(node.right))
+            right=unexpression(node.right)
+            )
 
     elif node.kind == "NEGATE":
-        return parser.ParseNode("NEGATE", expr=unexpression(node.expr))
+        return node.replace(expr=unexpression(node.expr))
 
     elif node.kind == "NUM":
         return node
@@ -32,29 +27,28 @@ def unexpression(node):
         return node
 
     elif node.kind == "ARRAY_REF":
-        return parser.ParseNode("ARRAY_REF",
-            name=node.name, expr=unexpression(node.expr))
+        return node.replace(expr=unexpression(node.expr))
 
     elif node.kind == "ARRAY_EXPR":
-        return parser.ParseNode("ARRAY_EXPR",
+        return node.replace(
             entries=[unexpression(entry) for entry in node.entries])
 
 def unstatement(node):
     if node.kind == "MOD_OP":
-        return parser.ParseNode(
-            "MOD_OP",
+        return node.replace(
             op=op_inverses[node.op],
-            var=node.var, expr=unexpression(node.expr))
+            expr=unexpression(node.expr)
+            )
 
     elif node.kind == "FROM_LOOP":
-        return parser.ParseNode("FROM_LOOP",
+        return node.replace(
             start_condition=node.end_condition,
             block=unblock(node.block),
             end_condition=node.start_condition
             )
 
     elif node.kind == "FOR_LOOP":
-        return parser.ParseNode("FOR_LOOP",
+        return node.replace(
             inc_at_end = not node.inc_at_end,
             var_declaration=unstatement(node.end_condition),
             increment_statement=unstatement(node.increment_statement),
@@ -77,14 +71,14 @@ def unstatement(node):
 
     elif node.kind == "IF":
         if "false" in node.data:
-            return parser.ParseNode("IF",
+            return node.replace(
                 condition=node.result,
                 true=unblock(node.true),
-                result=node.condition,
-                false=unblock(node.false)
+                false=unblock(node.false),
+                result=node.condition
                 )
         else:
-           return parser.ParseNode("IF",
+            return node.replace(
                 condition=node.result,
                 true=unblock(node.true),
                 result=node.condition
@@ -102,17 +96,15 @@ def unstatement(node):
                 )
 
     elif node.kind == "FUNCTION_CALL":
-        return parser.ParseNode("FUNCTION_CALL",
-            name=node.name,
-            backwards= not (node.backwards),
-            ref_args=node.ref_args,
-            const_args=node.const_args
-            )
+        return node.replace(backwards= not node.backwards)
 
-    elif node.kind == "SWAP_OP":
-        return node
+    elif node.kind == "EXIT":
+        return node.replace("ENTER")
 
-    elif node.kind == "RESULT":
+    elif node.kind == "ENTER":
+        return node.replace("EXIT")
+
+    elif node.kind in ("SWAP_OP", "RESULT"):
         return node
 
     elif node.kind == "UN":
@@ -126,10 +118,10 @@ def unblock(node):
 
     return inverted
 
-def unfunction(node):
-    inverted = parser.ParseNode("FUNCTION")
-    inverted.ref_parameters = node.ref_parameters
-    inverted.const_parameters = node.const_parameters
-    inverted.name = node.name
-    inverted.block = unblock(node.block)
-    return inverted
+def unfunction(f):
+    return datatypes.Function(
+        f.name,
+        f.ref_parameters,
+        f.const_parameters,
+        unblock(f.block)
+        )

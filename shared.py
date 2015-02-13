@@ -6,11 +6,13 @@ program = None
 # A list of lines of the Arrow code currently being processed.
 code = None
 
-# The possible states the interpreter can be in.
-class Stages(Enum):
-  scanning = 1
-  parsing = 2
-  evaluation = 3
+# 
+class ReturnException(Exception):
+    """
+    Used by Arrow functions to return.
+    """
+    def __init__(self, returned_value):
+        self.value = returned_value
 
 class ArrowException(Exception):
     """
@@ -24,3 +26,9 @@ class ArrowException(Exception):
         self.stage = stage
         self.message = message
         self.token = token
+
+# The possible states the interpreter can be in.
+class Stages(Enum):
+    scanning = 1
+    parsing = 2
+    evaluation = 3

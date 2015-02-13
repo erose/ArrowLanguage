@@ -1,4 +1,4 @@
-import shared, datatypes, inverter, evaluator
+import shared, datatypes, inverter, evaluator, collections
 
 class ParseNode:
     """
@@ -9,11 +9,35 @@ class ParseNode:
         self.kind = kind
         self.data = dict(**kwargs)
 
+    def replace(self, kind=None, **kwargs):
+        """
+        Returns a node with updated data.
+        """
+
+        new_data = self.data.copy()
+        new_data.update(kwargs)
+
+        if kind is None:
+            return ParseNode(self.kind, **new_data)
+        else:
+            return ParseNode(kind, **new_data)
+
     def __getattr__(self, attr):
         if attr in self.data:
             return self.data[attr]
         
         raise KeyError(attr)
+
+    # def flatten(self, d=0):
+    #     for item in self.data.values():
+    #         if isinstance(item, ParseNode):
+    #             yield item, d
+    #             yield from item.flatten(d+1)
+    #         elif isinstance(item, collections.Iterable):
+    #             for a in item:
+    #                 if isinstance(a, ParseNode):
+    #                     yield a, d
+    #                     yield from a.flatten(d+1)
 
     def __repr__(self):
         return "{}, {}".format(str(self.kind), str(self.data))
@@ -75,6 +99,7 @@ class Parser:
     def process(self, kinds=[], strings=[], boolean=None, necessary=None):
         """
         Checks input against the current token and consumes it.
+        Return type varies depending on the arguments.
         """
 
         kind, string = self.current.kind, self.current.string
@@ -98,7 +123,6 @@ class Parser:
 class ArrowParser(Parser):
     def program(self):
         function_nodes = {}
-        unfunction_nodes = {}
         names = []
         vals = []
 
@@ -113,20 +137,18 @@ class ArrowParser(Parser):
 
                     self.accept_strings(",")
 
-                main = ParseNode(
-                    "FUNCTION", name="main",
-                    ref_parameters=names,
-                    const_parameters=[],
-                    block=self.block()
+
+                main = datatypes.Function("main",
+                    names,
+                    [],
+                    self.block()
                     )
 
                 function_nodes["main"] = main
-                unfunction_nodes["main"] = inverter.unfunction(main)
 
             else:
                 f = self.function()
                 function_nodes[f.name] = f
-                unfunction_nodes[f.name] = inverter.unfunction(f)
 
         node = ParseNode(
             "PROGRAM",
@@ -134,8 +156,7 @@ class ArrowParser(Parser):
                 for name, val in zip(names, vals)
             },
             main=main,
-            functions=function_nodes,
-            unfunctions=unfunction_nodes
+            functions=function_nodes
             )
 
         shared.program = node
@@ -161,12 +182,8 @@ class ArrowParser(Parser):
         self.confirm_strings(")")
 
         block = self.block()
-        return ParseNode(
-            "FUNCTION", name=name,
-            ref_parameters=ref_parameters,
-            const_parameters=const_parameters,
-            block=block
-            )
+        return datatypes.Function(
+            name, ref_parameters, const_parameters, block)
 
     def block(self):
         self.confirm_strings("{")
@@ -213,12 +230,22 @@ class ArrowParser(Parser):
 
     def enter_or_exit_statement(self):
         if self.check_strings("enter"):
+            value_node = self.expression()
             self.confirm_strings("if")
-            return ParseNode("ENTER", condition=self.expression())
+            return ParseNode(
+                "ENTER",
+                value=value_node,
+                condition=self.expression()
+                )
 
         elif self.check_strings("exit"):
+            value_node = self.expression()
             self.confirm_strings("if")
-            return ParseNode("EXIT", condition=self.expression())
+            return ParseNode(
+                "EXIT",
+                value=value_node,
+                condition=self.expression()
+                )
 
     def un(self):
         self.confirm_strings("un")

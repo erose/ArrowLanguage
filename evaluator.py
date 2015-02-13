@@ -1,5 +1,5 @@
 import operator
-import inverter, shared
+import inverter, shared, datatypes
 
 bin_ops = {
     "+": operator.add,
@@ -113,31 +113,36 @@ def expr_eval(node, table=Memory()):
         array = table[node.name]
         # Compute the index (a Num object).
         index = expr_eval(node.expr, table)
-        # Check it and convert it to a Python integer.
-        index = check_index(index, array)
 
         return array[index]
 
     elif node.kind == "FUNCTION_CALL":
-        # TODO: Replace with first-class function code.
-        if node.backwards:
-            function = shared.program.unfunctions[node.name]
-        else:
-            function = shared.program.functions[node.name]
+        # The object representing the function we are calling.
+        function = shared.program.functions[node.name]
 
-        result = function_eval(
-            node=function,
-            ref_arg_vars=node.ref_args,
-            ref_arg_vals=[expr_eval(arg, table) for arg in node.ref_args],
-            const_arg_vals=[expr_eval(arg, table) for arg in node.const_args]
+        output = function.evaluate(
+            node.backwards,
+            node.ref_args,
+            [expr_eval(arg, table) for arg in node.ref_args],
+            [expr_eval(arg, table) for arg in node.const_args]
         )
 
-        table.update_refs(result)
-        return result["result"]
+        # After evaluating the function, the output table will
+        # contain changed variables and a final result.
+        table.update_refs(output)
+
+        # TODO: fix hack
+        if "result" in output:
+            return output["result"]
+        else:
+            import sys
+            print("No result found in table.")
+            sys.exit(0)
 
     elif node.kind == "ARRAY_EXPR":
         # Evaluate the expressions in order and create a list.
-        return [expr_eval(entry, table) for entry in node.entries]
+        return datatypes.List(
+            [expr_eval(entry, table) for entry in node.entries])
 
 def mod_op_eval(node, table):
     """
@@ -150,7 +155,6 @@ def mod_op_eval(node, table):
         # TODO: Refactor to use the Array object's fetch.
         array = table[node.var.name]
         index = expr_eval(node.var.expr, table)
-        index = check_index(index, array)
 
         # A[x] += 1 expands into A[x] = A[x] + 1.
         array[index] = bin_ops[node.op](array[index], expr_value)
@@ -177,7 +181,6 @@ def swap_op_eval(node, table):
 
         l_array, r = table[node.left.name], node.right.name
         l_index = expr_eval(node.left.expr, table)
-        l_index = check_index(l_index, l_array)
 
         l_array[l_index], table[r] = table[r], l_array[l_index]
 
@@ -185,7 +188,6 @@ def swap_op_eval(node, table):
 
         l, r_array = node.left.name, table[node.right.name]
         r_index = expr_eval(node.right.expr, table)
-        r_index = check_index(r_index, r_array)
 
         table[l], r_array[r_index] = r_array[r_index], table[l]
 
@@ -194,9 +196,6 @@ def swap_op_eval(node, table):
         L, R = left_array, right_array = table[node.left.name], table[node.right.name]
         i = left_index = expr_eval(node.left.expr, table)
         j = right_index = expr_eval(node.right.expr, table)
-
-        i = check_index(i, L)
-        j = check_index(j, R)
 
         L[i], R[j] = R[j], L[i]
 
@@ -241,7 +240,7 @@ def statement_eval(node, table):
             # Execute the block.
             table = block_eval(block_node, table)
 
-            # Continue until the end condition is satisfied.
+            # Break if the end condition is satisfied.
             if expr_eval(node.end_condition, table):
                 break
 
@@ -263,7 +262,7 @@ def statement_eval(node, table):
             if node.inc_at_end:
                 table = mod_op_eval(increment_node, table)
 
-            # Repeat until the end condition is satisfied.
+            # Break if the end condition is satisfied.
             if table.refs[until_node.name] == expr_eval(until_node.expr, table):
                 break
 
@@ -303,28 +302,31 @@ def statement_eval(node, table):
 
     elif node.kind == "FUNCTION_CALL":
         # Call the function, then update table with the results.
+        function = shared.program.functions[node.name]
 
-        # TODO: Use function object code here.
-        if node.backwards:
-            function = shared.program.unfunctions[node.name]
-        else:
-            function = shared.program.functions[node.name]
-
-        table.update_refs(
-            function_eval(
-                node=function,
-                ref_arg_vars=node.ref_args,
-                ref_arg_vals=[expr_eval(arg, table) for arg in node.ref_args],
-                const_arg_vals=[expr_eval(arg, table) for arg in node.const_args]
-            )
+        output = function.evaluate(
+            node.backwards,
+            node.ref_args,
+            [expr_eval(arg, table) for arg in node.ref_args],
+            [expr_eval(arg, table) for arg in node.const_args]
         )
+
+        # After evaluating the function, the output table will
+        # contain changed variables.
+        table.update_refs(output)
 
     elif node.kind == "UN":
         inverted_node = inverter.unstatement(node.statement)
         table = statement_eval(inverted_node, table)
 
-    elif node.kind in ("ENTER", "EXIT"):
-        print(node.kind, node.condition)
+    elif node.kind == "EXIT":
+        if expr_eval(node.condition, table):
+            # We return by raising an exception.
+            raise shared.ReturnException(expr_eval(node.value, table))
+
+    elif node.kind == "ENTER":
+        # Do nothing when we actually encounter these.
+        pass
 
     return table
 
