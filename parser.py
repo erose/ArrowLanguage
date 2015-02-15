@@ -171,10 +171,10 @@ class ArrowParser(Parser):
         while True:
             if self.check_strings("ref"):
                 var = self.V()
-                ref_parameters.append(var)
+                ref_parameters.append(var.name)
             elif self.check_strings("const"):
                 var = self.V()
-                const_parameters.append(var)
+                const_parameters.append(var.name)
             if self.current.string == ")":
                 break
             self.confirm_strings(",")

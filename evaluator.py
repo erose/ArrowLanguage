@@ -20,9 +20,9 @@ current_node = None
 
 class Memory():
     """
-    Stores variable names and values. One per function.
+    Stores variable names and values. One per scope.
 
-    Nothing more than a wrapper around two dictionaries,
+    Essentially a wrapper around two dictionaries,
     refs and consts, where consts is immutable.
     """
 
@@ -42,17 +42,32 @@ class Memory():
         return key in self.refs or key in self.consts
 
     def __getitem__(self, name):
-        if name in self.refs:
-            return self.refs[name]
-        if name in self.consts:
-            return self.consts[name]
+        # Splits "x.foo.bar" into name = "x", after_dot = ["foo", "bar"]
+        name, *after_dot = name.split('.')
 
-        # BROKEN
-        raise shared.ArrowException(
-            shared.Stages.evaluation,
-            "{} not found in table.".format(name),
-            current_node.token
-            )
+        if name in self.refs:
+            result = self.refs[name]
+        if name in self.consts:
+            result = self.consts[name]
+
+        # "x.foo.bar" will
+        # - get the variable x's attribute "foo"
+        # - get x.foo's attribute "bar"
+        # 
+        # If after_dot is empty, this loop won't run.
+
+        for identifier in after_dot:
+            result = getattr(result, identifier)
+
+        if result is not None:
+            return result
+        else:
+            # BROKEN
+            raise shared.ArrowException(
+                shared.Stages.evaluation,
+                "{} not found in table.".format(name),
+                current_node.token
+                )
 
     def __setitem__(self, name, value):
         if name in self.consts:
@@ -117,8 +132,12 @@ def expr_eval(node, table=Memory()):
         return array[index]
 
     elif node.kind == "FUNCTION_CALL":
-        # The object representing the function we are calling.
-        function = shared.program.functions[node.name]
+        # Get the function/method object.
+        # If the ID contains dots, it's a method.
+        if "." in node.name:
+            function = table[node.name]
+        else:
+            function = shared.program.functions[node.name]
 
         output = function.evaluate(
             node.backwards,
@@ -301,9 +320,15 @@ def statement_eval(node, table):
         table = block_eval(node, table)
 
     elif node.kind == "FUNCTION_CALL":
-        # Call the function, then update table with the results.
-        function = shared.program.functions[node.name]
+        # Get the function/method object.
+        # If the ID contains dots, it's a method.
 
+        if "." in node.name:
+            function = table[node.name]
+        else:
+            function = shared.program.functions[node.name]
+
+        # Call the function, then update table with the results.
         output = function.evaluate(
             node.backwards,
             node.ref_args,
@@ -338,42 +363,6 @@ def block_eval(node, table=Memory()):
     for statement in node.statements:
         table = statement_eval(statement, table)
     return table
-
-def function_eval(node, ref_arg_vars, ref_arg_vals, const_arg_vals):
-    """
-    Given a list of reference and constant args, evaluates functions.
-    Returns a memory table.
-    """
-
-    # Create a memory table for the function by zipping up
-    # the arguments into (parameter, value) pairs.
-    table = Memory(
-        zip([var.name for var in node.ref_parameters], ref_arg_vals),
-        zip([var.name for var in node.const_parameters], const_arg_vals)
-        )
-
-    result = block_eval(node.block, table)
-
-    # Go through the variable names in the function's memory table
-    # and change them to the new names.
-    for arg, param in zip(ref_arg_vars, node.ref_parameters):
-        result.refs[arg.name] = result.refs[param.name]
-
-        # If a function like
-        # 
-        # f (ref x){
-        #   ...
-        # }
-        # 
-        # was called like
-        # 
-        # f(&x)
-        # 
-        # then we shouldn't delete 'x' from the resulting memory table.
-        if arg.name != param.name:
-            del result.refs[param.name]
-
-    return result
 
 def program_eval(node):
     """

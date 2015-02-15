@@ -3,6 +3,7 @@ is_even(const x){
     exit 0 if (x % 2 == 1)
 }
 
-main(n := 3){
+main(n := 3, x := []){
     n += is_even(2)
+    x.push(n)
 }

@@ -105,7 +105,7 @@ class Function:
     Functions are first-class objects in Arrow.
     """
 
-    def __init__(self, name, ref_parameters, const_parameters, block):
+    def __init__(self, name, refs, consts, block):
         """
         Functions store
             - their name
@@ -117,22 +117,10 @@ class Function:
         self.name = name
         self.block = block
 
-        self.ref_parameters = ref_parameters
-        self.const_parameters = const_parameters
+        self.ref_parameters = refs
+        self.const_parameters = consts
 
-    def evaluate(self, backwards, ref_arg_vars, ref_arg_vals, const_arg_vals):
-        """
-        Given a list of reference and constant args, evaluates functions.
-        Returns a memory table.
-        """
-
-        # Create a memory table for the function by zipping up
-        # the arguments into (parameter, value) pairs.
-        table = evaluator.Memory(
-            zip([var.name for var in self.ref_parameters], ref_arg_vals),
-            zip([var.name for var in self.const_parameters], const_arg_vals)
-            )
-
+    def execute(self, backwards, table):
         # Go up from the bottom, looking for enter statements, in order to
         # find out where we should start executing.
 
@@ -158,10 +146,25 @@ class Function:
         except shared.ReturnException as e:
             table["result"] = e.value
 
+    def evaluate(self, backwards, ref_arg_vars, ref_arg_vals, const_arg_vals):
+        """
+        Given a list of reference and constant args, evaluates functions.
+        Returns a memory table.
+        """
+
+        # Create a memory table for the function by zipping up
+        # the arguments into (parameter, value) pairs.
+        table = evaluator.Memory(
+            zip(self.ref_parameters, ref_arg_vals),
+            zip(self.const_parameters, const_arg_vals)
+            )
+
+        self.execute(backwards, table)
+
         # Go through the variable names in the function's memory table
         # and change them to the new names.
-        for arg, param in zip(ref_arg_vars, self.ref_parameters):
-            table.refs[arg.name] = table.refs[param.name]
+        for arg, param_name in zip(ref_arg_vars, self.ref_parameters):
+            table.refs[arg.name] = table.refs[param_name]
 
             # If a function like
             # 
@@ -174,10 +177,29 @@ class Function:
             # f(&x)
             # 
             # then we shouldn't delete 'x' from the resulting memory table.
-            if arg.name != param.name:
-                del table.refs[param.name]
+            if arg.name != param_name:
+                del table.refs[param_name]
 
         return table
+
+class BuiltinFunction(Function):
+    """
+    """
+
+    def __init__(self, name, refs, consts, python_function, inverse_function):
+        self.name = name
+        self.python_function = python_function
+
+        self.ref_parameters = refs
+        self.const_parameters = consts
+        self.inverse_function = inverse_function
+
+    def execute(self, backwards, table):
+        # Run the appropriate underlying Python function.
+        if backwards:
+            table["result"] = self.inverse_function(table)
+        else:
+            table["result"] = self.python_function(table)
 
 class List:
     """
@@ -187,11 +209,24 @@ class List:
     def __init__(self, contents):
         self.contents = contents
 
-    def push(self, data):
-        self.contents.push(data)
+        self._push = self.push
+        self._pop = self.pop
 
-    def pop(self):
+        self.push = BuiltinFunction("push", [], ["data"], self.push, self._pop)
+        self.pop = BuiltinFunction("pop", [], [], self.pop, self._push)
+
+    # @builtin_method(consts=["data"])
+    def push(self, table):
+        self.contents.append(table["data"])
+        return table
+
+    # @builtin_method()
+    def pop(self, table):
         return self.contents.pop()
+
+    # @builtin_method()
+    def empty(self, table):
+        return len(self.contents) == 0
 
     def check_index(self, index):
         """

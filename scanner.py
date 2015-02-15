@@ -25,7 +25,9 @@ class Scanner:
             # Keywords.
             (r"\bexit\b|\benter\b|\bdo/undo\b|\byielding\b|\bresult\b|\buntil\b|\bconst\b|\bfrom\b|\bfor\b|\bref\b|\bif\b", tokenizer("KEYWORD")),
             # Identifiers.
-            (r"[a-zA-Z_]+\d*[a-zA-Z_]*", tokenizer("ID")),
+            # (though the '.' technically isn't allowed in identifiers,
+            #  it's considered part of an identifier internally.)
+            (r"[a-zA-Z_]+(\d|[a-zA-Z_]|\.)*", tokenizer("ID")),
             # Number literals.
             (r"\d+", tokenizer("DIGITS")),
             # Symbols.
