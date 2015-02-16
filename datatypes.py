@@ -11,6 +11,9 @@ class Num:
         Nums store a numerator, denominator, and sign (either 1 or -1).
         """
 
+        _to_str = self.to_str
+        self.to_str = BuiltinFunction("to_str", [], [], self.to_str, _to_str)
+
         if bottom is None:
             bottom = 1
 
@@ -31,6 +34,9 @@ class Num:
         # Because Nums are immutable, a reduction to lowest terms
         # in the constructor ensures they are always in lowest form.
         self.reduce()
+
+    def to_str(self, table):
+        return String(str(self))
 
     @staticmethod
     def gcd(a, b):
@@ -223,13 +229,13 @@ class List:
         _pop = self.pop
         _peek = self.peek
         _empty = self.empty
-        _size = self.size
+        _len = self.len
 
         self.push = BuiltinFunction("push", [], ["data"], self.push, _pop)
         self.pop = BuiltinFunction("pop", [], [], self.pop, _push)
         self.peek = BuiltinFunction("peek", [], [], self.peek, _peek)
         self.empty = BuiltinFunction("empty", [], [], self.empty, _empty)
-        self.size = BuiltinFunction("size", [], [], self.size, _size)
+        self.len = BuiltinFunction("len", [], [], self.len, _len)
 
     def push(self, table):
         self.contents.append(table["data"])
@@ -244,7 +250,7 @@ class List:
     def empty(self, table):
         return Boolean(len(self.contents) == 0)
 
-    def size(self, table):
+    def len(self, table):
         return Num(len(self.contents))
 
     def check_index(self, index):
@@ -295,7 +301,6 @@ class Boolean:
     def __ne__(self, other):
         return self.bit != other.bit
 
-
 class String:
     """
     Arrow's string datatype.
@@ -303,6 +308,46 @@ class String:
 
     def __init__(self, python_str):
         self.str = python_str
+
+        _len = self.len
+        _get = self.get
+        _left_add = self.left_add
+        _left_del = self.left_del
+        _to_int = self.to_int
+
+        self.len = BuiltinFunction("len", [], [], self.len, _len)
+        self.get = BuiltinFunction("get", [], ["index"], self.get, _get)
+        self.left_add = BuiltinFunction(
+            "left_add", [], ["other"], self.left_add, _left_del)
+        self.left_del = BuiltinFunction(
+            "left_del", [], ["other"], self.left_del, _left_add)
+        self.to_int = BuiltinFunction(
+            "to_int", [], [], self.to_int, _to_int)
+
+    def get(self, table):
+        i = table["index"].top
+        return String(self.str[i])
+
+    def len(self, table):
+        return Num(len(self.str))
+
+    def left_add(self, table):
+        self.str = table["other"].str + self.str
+
+    def left_del(self, table):
+        other = table["other"]
+        if self.str[:len(other)] != other.str:
+            print("ERRORED")
+        self.str = self.str[len(other):]
+
+    def to_int(self, table):
+        return Num(int(self.str))
+
+    def __eq__(self, other):
+        return Boolean(self.str == other.str)
+
+    def __ne__(self, other):
+        return Boolean(self.str != other.str)
 
     def __add__(self, other):
         return String(self.str + other.str)
@@ -316,7 +361,7 @@ class String:
         return len(self.str)
 
     def __repr__(self):
-        return self.str
+        return '"{}"'.format(self.str)
 
 if __name__ == "__main__":
     x = Num(-1)

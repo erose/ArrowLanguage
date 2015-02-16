@@ -519,7 +519,7 @@ class ArrowParser(Parser):
     def number(self):
         base_numerator = int(self.expect_kinds("DIGITS"))
 
-        if self.check_strings("."):
+        if self.check_strings(".") and self.lookahead.kind == "DIGIT":
             after_point = self.expect_kinds("DIGITS").rstrip("0")
 
             power = 10 ** len(after_point)

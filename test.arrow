@@ -1,5 +1,5 @@
 main(n := 3, x := [], greeting := "hello")
 {
-    n += x.push(1)
-    greeting += "z"
+    x.push(greeting.get(0))
+    greeting.left_add("hi and ")
 }

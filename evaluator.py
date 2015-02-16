@@ -143,14 +143,6 @@ def expr_eval(node, table=Memory()):
         # contain changed variables and a final result.
         table.update_refs(updated)
 
-        # TODO: fix hack
-        # if "result" in output:
-        #     return output["result"]
-        # else:
-        #     import sys
-        #     print("No result found in table.")
-        #     sys.exit(0)
-
         return result
 
     elif node.kind == "ARRAY_EXPR":
@@ -162,7 +154,7 @@ def mod_op_eval(node, table):
     """
     Evaluates mod-op nodes. Returns a memory table.
     """
-    
+
     expr_value = expr_eval(node.expr, table)
 
     if node.var.kind == "ARRAY_REF":
