@@ -23,6 +23,9 @@ def unexpression(node):
     elif node.kind == "NUM":
         return node
 
+    elif node.kind == "STRING":
+        return node
+
     elif node.kind == "VAR_REF":
         return node
 

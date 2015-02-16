@@ -83,8 +83,7 @@ if __name__ == "__main__":
     direction = 1
 
     while True:
-        input("Going {}... ".format(
-            "forwards" if direction > 0 else "backwards"))
+        print(".\n.\n.")
 
         # Update the main vars according to the result of the program.
         result = evaluator.program_eval(program)
@@ -97,3 +96,6 @@ if __name__ == "__main__":
 
         # Now we're going the other way.
         direction *= -1
+
+        input("Going {}... ".format(
+            "forwards" if direction > 0 else "backwards"))

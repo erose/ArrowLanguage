@@ -127,12 +127,14 @@ class Function:
         # The backwards flag tells us whether we are calling or uncalling.
         block = inverter.unblock(self.block) if backwards else self.block
 
+        result = None
+
         # TODO: this approach only finds un-nested enter statements.
         to_execute = []
         for node in reversed(block.statements):
             if node.kind == "ENTER":
                 if evaluator.expr_eval(node.condition, table):
-                    table["result"] = evaluator.expr_eval(node.value, table)
+                    result = evaluator.expr_eval(node.value, table)
                     break
             to_execute.append(node)
 
@@ -144,12 +146,20 @@ class Function:
             table = evaluator.block_eval(block_to_execute, table)
         
         except shared.ReturnException as e:
-            table["result"] = e.value
+            result = e.value
+
+        # HACKY HACK
+        if "result" in table:
+            temp = table["result"]
+            del table["result"]
+            return temp
+        else:    
+            return result
 
     def evaluate(self, backwards, ref_arg_vars, ref_arg_vals, const_arg_vals):
         """
         Given a list of reference and constant args, evaluates functions.
-        Returns a memory table.
+        Returns (memory table, result value).
         """
 
         # Create a memory table for the function by zipping up
@@ -159,7 +169,7 @@ class Function:
             zip(self.const_parameters, const_arg_vals)
             )
 
-        self.execute(backwards, table)
+        result = self.execute(backwards, table)
 
         # Go through the variable names in the function's memory table
         # and change them to the new names.
@@ -180,7 +190,7 @@ class Function:
             if arg.name != param_name:
                 del table.refs[param_name]
 
-        return table
+        return table, result
 
 class BuiltinFunction(Function):
     """
@@ -197,9 +207,9 @@ class BuiltinFunction(Function):
     def execute(self, backwards, table):
         # Run the appropriate underlying Python function.
         if backwards:
-            table["result"] = self.inverse_function(table)
+            return self.inverse_function(table)
         else:
-            table["result"] = self.python_function(table)
+            return self.python_function(table)
 
 class List:
     """
@@ -209,24 +219,33 @@ class List:
     def __init__(self, contents):
         self.contents = contents
 
-        self._push = self.push
-        self._pop = self.pop
+        _push = self.push
+        _pop = self.pop
+        _peek = self.peek
+        _empty = self.empty
+        _size = self.size
 
-        self.push = BuiltinFunction("push", [], ["data"], self.push, self._pop)
-        self.pop = BuiltinFunction("pop", [], [], self.pop, self._push)
+        self.push = BuiltinFunction("push", [], ["data"], self.push, _pop)
+        self.pop = BuiltinFunction("pop", [], [], self.pop, _push)
+        self.peek = BuiltinFunction("peek", [], [], self.peek, _peek)
+        self.empty = BuiltinFunction("empty", [], [], self.empty, _empty)
+        self.size = BuiltinFunction("size", [], [], self.size, _size)
 
-    # @builtin_method(consts=["data"])
     def push(self, table):
         self.contents.append(table["data"])
-        return table
+        return table["data"]
 
-    # @builtin_method()
     def pop(self, table):
         return self.contents.pop()
 
-    # @builtin_method()
+    def peek(self, table):
+        return self.contents[-1]
+
     def empty(self, table):
-        return len(self.contents) == 0
+        return Boolean(len(self.contents) == 0)
+
+    def size(self, table):
+        return Num(len(self.contents))
 
     def check_index(self, index):
         """
@@ -259,6 +278,24 @@ class List:
     def __repr__(self):
         return self.contents.__repr__()
 
+class Boolean:
+    """
+    Arrow's boolean datatype.
+    """
+
+    def __init__(self, bit):
+        self.bit = bit
+
+    def __bool__(self):
+        return self.bit
+
+    def __eq__(self, other):
+        return self.bit == other.bit
+
+    def __ne__(self, other):
+        return self.bit != other.bit
+
+
 class String:
     """
     Arrow's string datatype.
@@ -268,7 +305,15 @@ class String:
         self.str = python_str
 
     def __add__(self, other):
-        return self.str + other.str
+        return String(self.str + other.str)
+
+    def __sub__(self, other):
+        if self.str[-len(other):] != other.str:
+            print("ERRORED")
+        return String(self.str[:-len(other)])
+
+    def __len__(self):
+        return len(self.str)
 
     def __repr__(self):
         return self.str

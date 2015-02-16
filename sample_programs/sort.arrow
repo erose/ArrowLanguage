@@ -1,15 +1,13 @@
-pass(ref array, ref trace, ref s){
+pass(ref array, ref trace){
     for i := 0 {
         if (array[i] > array[i+1]){
             array[i] <=> array[i+1]
 
-            s += 1
-            trace[s] += 1 + i
-            s += 1
-            trace[s] += 1 + (i+1)
+            trace.push(i)
+            trace.push(i + 1)
 
-        } => trace[s] == i+1
-    } i += 1, until i == 3
+        } => trace.peek() == i + 1
+    } i += 1, until i == array.size() - 1
 }
 
 check(const array){
@@ -19,10 +17,10 @@ check(const array){
             if array[i] < array[i+1] {
                 counter += 1
             } <=>
-        } i += 1, until i == 3
+        } i += 1, until i == array.size() - 1
     }
     yielding {
-        if counter == 3 {
+        if counter == array.size() - 1 {
             result 1
         } <=>
         else {
@@ -31,16 +29,15 @@ check(const array){
     }
 }
 
-sort(ref array, ref trace, ref s){
-    from s == 0 {
-        pass(&array, &trace, &s)
+sort(ref array, ref trace){
+    from trace.peek() == -1 {
+        pass(&array, &trace)
     } until check(array) == 1
 }
 
 main(
-A := [3, 7, 3, 2],
-trace := [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-s := 0
+A := [3, 8, 7, 3, 2],
+trace := [-1]
 ){
-    sort(&A, &trace, &s)
+    sort(&A, &trace)
 }

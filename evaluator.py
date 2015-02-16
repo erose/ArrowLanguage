@@ -45,9 +45,10 @@ class Memory():
         # Splits "x.foo.bar" into name = "x", after_dot = ["foo", "bar"]
         name, *after_dot = name.split('.')
 
+        result = None
         if name in self.refs:
             result = self.refs[name]
-        if name in self.consts:
+        elif name in self.consts:
             result = self.consts[name]
 
         # "x.foo.bar" will
@@ -80,25 +81,14 @@ class Memory():
         else:
             self.refs[name] = value
 
+    def __delitem__(self, name):
+        if name in self.refs:
+            del self.refs[name]
+        elif name in consts.refs:
+            del consts.refs[name]
+
     def __repr__(self):
         return "refs: {}, consts: {}".format(self.refs, self.consts)
-
-def check_index(index, array):
-    """
-    Validates the array reference index and returns
-    the corresponding Python integer (not a Num object).
-    """
-    if index.bottom != 1:
-        pass
-        #Only access arrays with whole indices!
-    elif index.top >= len(array):
-        pass
-        #Array out of bounds error!
-    elif index.sign == -1:
-        pass
-        #Indexes can't be negative!
-
-    return index.top
 
 def expr_eval(node, table=Memory()):
     """
@@ -117,6 +107,9 @@ def expr_eval(node, table=Memory()):
 
     elif node.kind == "NUM":
         return node.number
+
+    elif node.kind == "STRING":
+        return node.string
 
     elif node.kind == "VAR_REF":
         return table[node.name]
@@ -139,24 +132,26 @@ def expr_eval(node, table=Memory()):
         else:
             function = shared.program.functions[node.name]
 
-        output = function.evaluate(
+        updated, result = function.evaluate(
             node.backwards,
             node.ref_args,
             [expr_eval(arg, table) for arg in node.ref_args],
             [expr_eval(arg, table) for arg in node.const_args]
         )
 
-        # After evaluating the function, the output table will
+        # After evaluating the function, the updated table will
         # contain changed variables and a final result.
-        table.update_refs(output)
+        table.update_refs(updated)
 
         # TODO: fix hack
-        if "result" in output:
-            return output["result"]
-        else:
-            import sys
-            print("No result found in table.")
-            sys.exit(0)
+        # if "result" in output:
+        #     return output["result"]
+        # else:
+        #     import sys
+        #     print("No result found in table.")
+        #     sys.exit(0)
+
+        return result
 
     elif node.kind == "ARRAY_EXPR":
         # Evaluate the expressions in order and create a list.
@@ -167,7 +162,7 @@ def mod_op_eval(node, table):
     """
     Evaluates mod-op nodes. Returns a memory table.
     """
-
+    
     expr_value = expr_eval(node.expr, table)
 
     if node.var.kind == "ARRAY_REF":
@@ -329,16 +324,16 @@ def statement_eval(node, table):
             function = shared.program.functions[node.name]
 
         # Call the function, then update table with the results.
-        output = function.evaluate(
+        updated, _ = function.evaluate(
             node.backwards,
             node.ref_args,
             [expr_eval(arg, table) for arg in node.ref_args],
             [expr_eval(arg, table) for arg in node.const_args]
         )
 
-        # After evaluating the function, the output table will
+        # After evaluating the function, the updated table will
         # contain changed variables.
-        table.update_refs(output)
+        table.update_refs(updated)
 
     elif node.kind == "UN":
         inverted_node = inverter.unstatement(node.statement)

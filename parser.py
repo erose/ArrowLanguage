@@ -462,6 +462,14 @@ class ArrowParser(Parser):
         if self.current.kind == "DIGITS":
             return self.number()
 
+        if self.current.kind == "STRING":
+            string = self.expect_kinds("STRING")
+            stripped_string = string[1:-1]
+            return ParseNode(
+                "STRING",
+                string=datatypes.String(stripped_string)
+                )
+
         if self.check_strings("("):
             node = self.expression()
             self.confirm_strings(")")
@@ -480,6 +488,9 @@ class ArrowParser(Parser):
         const_args = []
 
         while True:
+            if self.current.string == ")":
+                break
+
             if self.check_strings("&"):
                 var = self.V()
                 ref_args.append(var)
@@ -487,7 +498,8 @@ class ArrowParser(Parser):
                 expr = self.expression()
                 const_args.append(expr)
 
-            if self.current.string == ")": break
+            if self.current.string == ")":
+                break
             self.confirm_strings(",")
 
         self.confirm_strings(")")

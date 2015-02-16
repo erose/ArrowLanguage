@@ -1,9 +1,5 @@
-is_even(const x){
-    exit 1 if (x % 2 == 0)
-    exit 0 if (x % 2 == 1)
-}
-
-main(n := 3, x := []){
-    n += is_even(2)
-    x.push(n)
+main(n := 3, x := [], greeting := "hello")
+{
+    n += x.push(1)
+    greeting += "z"
 }

@@ -22,6 +22,8 @@ class Scanner:
             (r"\s+", tokenizer("SKIPPABLE")),
             # Skip comments, which are either hashtags or C-style /* ... */.
             (r"#.*|\/\*.*\*\/", tokenizer("SKIPPABLE")),
+            # String literals.
+            (r"\".*?\"", tokenizer("STRING")),
             # Keywords.
             (r"\bexit\b|\benter\b|\bdo/undo\b|\byielding\b|\bresult\b|\buntil\b|\bconst\b|\bfrom\b|\bfor\b|\bref\b|\bif\b", tokenizer("KEYWORD")),
             # Identifiers.
