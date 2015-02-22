@@ -20,19 +20,14 @@ check(const array){
         } i += 1, until i == array.len() - 1
     }
     yielding {
-        if counter == array.len() - 1 {
-            result 1
-        } <=>
-        else {
-            result 0
-        }
+        result (counter == array.len() - 1)
     }
 }
 
 sort(ref array, ref trace){
     from trace.peek() == -1 {
         pass(&array, &trace)
-    } until check(array) == 1
+    } until check(array)
 }
 
 main(

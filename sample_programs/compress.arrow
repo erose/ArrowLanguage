@@ -1,21 +1,28 @@
-chunk_encode(ref chunk, const char){
+chunk_encode(ref chunk){
     i := 0
+    char := chunk.get(0)
+
     from i == 0 {
         chunk.left_del(char)
         i += 1
-    } until chunk.len() == 0
+    } until chunk.get(0) != char
 
     chunk += i.to_str()
 
     last_char := chunk.get(chunk.len()-1)
-    i -= last_char.to_int()
+    i == last_char.to_int()
     last_char == chunk.get(chunk.len()-1)
 
     chunk += char
-
-    i == 0
+    char == chunk.get(chunk.len()-1)
 }
 
-main(data := "aaa"){
-    chunk_encode(&data, "a")
+main(data := "aaaaaabbbbccaaaaaabbaaaaaabbaaaaaaaacabbb"){
+    data += "$"
+
+    from data.get(data.len()-1) == "$" {
+        chunk_encode(&data)
+    } until data.get(0) == "$"
+
+    data.left_del("$")
 }

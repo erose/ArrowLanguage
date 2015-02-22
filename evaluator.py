@@ -12,7 +12,10 @@ bin_ops = {
     ">=": operator.ge,
     "<=": operator.le,
     "!=": operator.ne,
-    "==": operator.eq
+    "==": operator.eq,
+    "and": lambda x, y: x and y,
+    "or": lambda x, y: x or y,
+    "not": lambda x: not x
 }
 
 # The node currently being evaluated. (used in error reporting)
@@ -334,7 +337,7 @@ def statement_eval(node, table):
     elif node.kind == "EXIT":
         if expr_eval(node.condition, table):
             # We return by raising an exception.
-            raise shared.ReturnException(expr_eval(node.value, table))
+            raise shared.ReturnException()
 
     elif node.kind == "ENTER":
         # Do nothing when we actually encounter these.

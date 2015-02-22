@@ -11,8 +11,8 @@ class ReturnException(Exception):
     """
     Used by Arrow functions to return.
     """
-    def __init__(self, returned_value):
-        self.value = returned_value
+    def __init__(self):
+        pass
 
 class ArrowException(Exception):
     """

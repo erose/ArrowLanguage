@@ -230,20 +230,16 @@ class ArrowParser(Parser):
 
     def enter_or_exit_statement(self):
         if self.check_strings("enter"):
-            value_node = self.expression()
             self.confirm_strings("if")
             return ParseNode(
                 "ENTER",
-                value=value_node,
                 condition=self.expression()
                 )
 
         elif self.check_strings("exit"):
-            value_node = self.expression()
             self.confirm_strings("if")
             return ParseNode(
                 "EXIT",
-                value=value_node,
                 condition=self.expression()
                 )
 
@@ -406,6 +402,17 @@ class ArrowParser(Parser):
             action_block=action_block)
 
     def expression(self):
+        node = self.S()
+        while self.current.string in ("and", "or", "not"):
+            op = self.expect_strings("and", "or", "not")
+            other = self.S()
+            node = ParseNode("BIN_OP",
+                op=op,
+                left=node, right=other)
+
+        return node
+
+    def S(self):
         node = self.C()
         while self.current.string in ("<", ">", "<=", ">=", "==", "!="):
             op = self.expect_strings("<", ">", "<=", ">=", "==", "!=")
@@ -519,7 +526,7 @@ class ArrowParser(Parser):
     def number(self):
         base_numerator = int(self.expect_kinds("DIGITS"))
 
-        if self.check_strings(".") and self.lookahead.kind == "DIGIT":
+        if self.check_strings("."):
             after_point = self.expect_kinds("DIGITS").rstrip("0")
 
             power = 10 ** len(after_point)

@@ -1,21 +1,21 @@
-prime_factors(const n, ref results, const s){
-    exit 0 if n == 1
+prime_factors(ref n, ref results){
+    i := 1
+    
+    from (i == 1){
+        i += 1
+    } until n % i == 0
 
-    do/undo {
-        i := 1
-        from (i == 1){
-            i += 1
-        } until n % i == 0
-    }
-    yielding {
-        results[s] += i
-        prime_factors(n/i, &results, s + 1)
-    }
+    n /= i
+    results.push(i)
+    i == results.peek()
+
+    exit if n <= 1
+    prime_factors(&n, &results)
 }
 
 main(
-n := 1893,
-results := [0, 0, 0, 0, 0, 0, 0, 0, 0]
+n := 200,
+results := []
 ){
-    prime_factors(n, &results, 0)
+    prime_factors(&n, &results)
 }

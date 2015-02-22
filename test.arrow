@@ -1,5 +1,8 @@
+f(const n){
+    result n + 3
+}
+
 main(n := 3, x := [], greeting := "hello")
 {
-    x.push(greeting.get(0))
-    greeting.left_add("hi and ")
+    x.push(f(2))
 }

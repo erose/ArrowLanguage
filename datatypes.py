@@ -12,7 +12,10 @@ class Num:
         """
 
         _to_str = self.to_str
+        _is_int = self.is_int
+
         self.to_str = BuiltinFunction("to_str", [], [], self.to_str, _to_str)
+        self.is_int = BuiltinFunction("is_int", [], [], self.is_int, _is_int)
 
         if bottom is None:
             bottom = 1
@@ -37,6 +40,9 @@ class Num:
 
     def to_str(self, table):
         return String(str(self))
+
+    def is_int(self, table):
+        return Boolean(self.bottom == 1)
 
     @staticmethod
     def gcd(a, b):
@@ -151,16 +157,14 @@ class Function:
         try:
             table = evaluator.block_eval(block_to_execute, table)
         
-        except shared.ReturnException as e:
-            result = e.value
+        except shared.ReturnException:
+            pass
 
         # HACKY HACK
         if "result" in table:
             temp = table["result"]
             del table["result"]
             return temp
-        else:    
-            return result
 
     def evaluate(self, backwards, ref_arg_vars, ref_arg_vals, const_arg_vals):
         """

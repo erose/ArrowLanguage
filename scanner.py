@@ -25,7 +25,7 @@ class Scanner:
             # String literals.
             (r"\".*?\"", tokenizer("STRING")),
             # Keywords.
-            (r"\bexit\b|\benter\b|\bdo/undo\b|\byielding\b|\bresult\b|\buntil\b|\bconst\b|\bfrom\b|\bfor\b|\bref\b|\bif\b", tokenizer("KEYWORD")),
+            (r"\bor\b|\band\b|\bexit\b|\benter\b|\bdo/undo\b|\byielding\b|\bresult\b|\buntil\b|\bconst\b|\bfrom\b|\bfor\b|\bref\b|\bif\b", tokenizer("KEYWORD")),
             # Identifiers.
             # (though the '.' technically isn't allowed in identifiers,
             #  it's considered part of an identifier internally.)
